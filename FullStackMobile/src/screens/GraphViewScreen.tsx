@@ -1,0 +1,170 @@
+import React from 'react';
+import {
+  View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { Rect, Line, Text as SvgText } from 'react-native-svg';
+import { nashikAreas, generateHourlyData, getAQICategory } from '../utils/aqiUtils';
+
+interface GraphViewScreenProps {
+  selectedArea: string;
+  selectedDate: Date;
+  onBack: () => void;
+  onFilterDate: () => void;
+}
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const AQI_LEGEND = [
+  { level: 'Good', range: '0-50', color: '#22c55e' },
+  { level: 'Satisfactory', range: '51-100', color: '#84cc16' },
+  { level: 'Moderate', range: '101-200', color: '#eab308' },
+  { level: 'Poor', range: '201-300', color: '#f97316' },
+  { level: 'Very Poor', range: '301-400', color: '#ef4444' },
+  { level: 'Severe', range: '401-500', color: '#991b1b' },
+];
+
+// Custom SVG bar chart — replaces victory-native
+function AQIBarChart({ data }: { data: { x: string; y: number; color: string }[] }) {
+  const chartWidth = SCREEN_WIDTH - 64;
+  const chartHeight = 240;
+  const padLeft = 40;
+  const padBottom = 40;
+  const padTop = 12;
+  const padRight = 10;
+
+  const innerW = chartWidth - padLeft - padRight;
+  const innerH = chartHeight - padBottom - padTop;
+  const count = data.length;
+  const maxY = Math.max(...data.map(d => d.y), 1);
+
+  const barWidth = Math.max(4, (innerW / count) * 0.55);
+  const slotW = innerW / count;
+
+  // Y-axis ticks
+  const yTicks = [0, Math.round(maxY * 0.25), Math.round(maxY * 0.5), Math.round(maxY * 0.75), maxY];
+
+  return (
+    <Svg width={chartWidth} height={chartHeight}>
+      {/* Grid lines & Y labels */}
+      {yTicks.map((tick) => {
+        const y = padTop + innerH - (tick / maxY) * innerH;
+        return (
+          <React.Fragment key={tick}>
+            <Line
+              x1={padLeft} y1={y}
+              x2={chartWidth - padRight} y2={y}
+              stroke="#f3f4f6" strokeWidth={1}
+            />
+            <SvgText x={padLeft - 4} y={y + 3} fontSize={9} fill="#6b7280" textAnchor="end">
+              {tick}
+            </SvgText>
+          </React.Fragment>
+        );
+      })}
+
+      {/* Bars */}
+      {data.map((d, i) => {
+        const barH = Math.max(2, (d.y / maxY) * innerH);
+        const x = padLeft + i * slotW + (slotW - barWidth) / 2;
+        const y = padTop + innerH - barH;
+        return (
+          <React.Fragment key={i}>
+            <Rect x={x} y={y} width={barWidth} height={barH} fill={d.color} rx={2} />
+            {/* Only render label when x has a value (every 3rd tick) */}
+            {d.x !== '' && (
+              <SvgText
+                x={x + barWidth / 2}
+                y={chartHeight - 10}
+                fontSize={8}
+                fill="#6b7280"
+                textAnchor="middle"
+                rotation="-30"
+                originX={x + barWidth / 2}
+                originY={chartHeight - 10}
+              >
+                {d.x}
+              </SvgText>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </Svg>
+  );
+}
+
+export default function GraphViewScreen({ selectedArea, selectedDate, onBack }: GraphViewScreenProps) {
+  const area = nashikAreas.find(a => a.name === selectedArea) || nashikAreas[0];
+  const hourlyData = generateHourlyData(area.aqi);
+
+  // Show every 3rd hour on x-axis to avoid crowding
+  const chartData = hourlyData.map((d, i) => ({
+    x: i % 3 === 0 ? d.time : '',
+    y: d.aqi,
+    color: getAQICategory(d.aqi).color,
+  }));
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>AQI vs Time</Text>
+        </View>
+        <View style={styles.infoBox}>
+          <Text style={styles.infoLabel}>Showing data for</Text>
+          <Text style={styles.infoValue}>
+            {selectedArea} • {selectedDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </Text>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Bar Chart Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Hour-wise AQI</Text>
+          <AQIBarChart data={chartData} />
+        </View>
+
+        {/* Legend */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>AQI Level Legend</Text>
+          {AQI_LEGEND.map(item => (
+            <View key={item.level} style={styles.legendRow}>
+              <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+              <Text style={styles.legendLevel}>{item.level}</Text>
+              <Text style={styles.legendRange}>{item.range}</Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff' },
+  header: {
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f3f4f6',
+    paddingTop: 52, paddingHorizontal: 20, paddingBottom: 16,
+  },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  backBtn: { padding: 4 },
+  headerTitle: { fontSize: 20, fontWeight: '600', color: '#111827' },
+  infoBox: { backgroundColor: '#f9fafb', borderRadius: 12, padding: 14 },
+  infoLabel: { fontSize: 12, color: '#6b7280', marginBottom: 3 },
+  infoValue: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  scrollContent: { padding: 20, paddingBottom: 100, gap: 16 },
+  card: {
+    backgroundColor: '#fff', borderRadius: 20, padding: 20,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 10, elevation: 3,
+  },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 16 },
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f9fafb' },
+  legendDot: { width: 20, height: 20, borderRadius: 5 },
+  legendLevel: { flex: 1, fontSize: 13, fontWeight: '600', color: '#111827' },
+  legendRange: { fontSize: 13, color: '#6b7280' },
+});
