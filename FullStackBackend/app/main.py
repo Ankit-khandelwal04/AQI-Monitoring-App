@@ -79,6 +79,7 @@ app.include_router(alert_routes.router,  prefix="/alerts",  tags=["Alerts"])
 app.include_router(maps_routes.router,   prefix="/maps",    tags=["Maps & GeoJSON"])
 app.include_router(report_routes.router, prefix="/reports", tags=["Reports"])
 app.include_router(ml_routes.router,     prefix="/ml",      tags=["Machine Learning"])
+app.include_router(ml_routes.router,     prefix="/ml",      tags=["Machine Learning"])
 
 
 # ── Health check ─────────────────────────────────────────────

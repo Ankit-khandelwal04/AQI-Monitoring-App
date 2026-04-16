@@ -14,6 +14,12 @@ venv/
 env/
 ENV/
 
+# ML Generated Files (large files - regenerate with: python ml/aqi_ml_pipeline.py)
+FullStackBackend/ml/models/*.pkl
+FullStackBackend/ml/models/*.json
+FullStackBackend/ml/data/*.csv
+FullStackBackend/ml/plots/*.png
+
 # Expo
 .expo/
 .expo-shared/

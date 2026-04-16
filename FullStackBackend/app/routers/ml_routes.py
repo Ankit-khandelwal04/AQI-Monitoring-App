@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import json
 
-router = APIRouter(prefix="/ml", tags=["Machine Learning"])
+router = APIRouter(tags=["Machine Learning"])
 
 # Paths
 ML_DIR = Path(__file__).parent.parent.parent / 'ml'
