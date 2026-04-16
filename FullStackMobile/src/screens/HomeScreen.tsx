@@ -6,12 +6,30 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { getAQICategory, nashikAreas } from '../utils/aqiUtils';
 
-// Conditional import for DateTimePicker
+// Conditional imports for platform-specific components
 let DateTimePicker: any;
+let MapView: any;
+let Marker: any;
+let Circle: any;
+let Callout: any;
+let PROVIDER_GOOGLE: any;
+
 if (Platform.OS === 'web') {
   DateTimePicker = require('../components/DateTimePicker.web').default;
+  MapView = require('../components/MapView.web').default;
+  // Web doesn't need these
+  Marker = View;
+  Circle = View;
+  Callout = View;
+  PROVIDER_GOOGLE = 'google';
 } else {
   DateTimePicker = require('@react-native-community/datetimepicker').default;
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+  Circle = Maps.Circle;
+  Callout = Maps.Callout;
+  PROVIDER_GOOGLE = Maps.PROVIDER_GOOGLE;
 }
 
 interface HomeScreenProps {
@@ -28,6 +46,9 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
   const [showZonePicker, setShowZonePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  // Map reference for animating to selected zone
+  const mapRef = useRef<any>(null);
 
   const selectedArea = nashikAreas.find(a => a.name === selectedZone) || nashikAreas[0];
   const aqiCategory = getAQICategory(selectedArea.aqi);
