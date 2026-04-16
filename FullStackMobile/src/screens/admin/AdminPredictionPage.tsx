@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Polyline, Line, Circle, Text as SvgText } from 'react-native-svg';
-import api from '../../utils/api';
+import { apiMLForecast, apiMLModelInfo, apiMLFeatureImportance } from '../../utils/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -125,11 +125,11 @@ export default function AdminPredictionPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get(`/ml/forecast/${selectedZone}?hours=${predHours}`);
-      setForecastData(response.data.forecast || []);
+      const response = await apiMLForecast(selectedZone, predHours);
+      setForecastData(response.forecast || []);
     } catch (err: any) {
       console.error('Error fetching forecast:', err);
-      setError(err.response?.data?.detail || 'Failed to fetch forecast. Please ensure ML models are trained.');
+      setError(err.message || 'Failed to fetch forecast. Please ensure ML models are trained.');
     } finally {
       setLoading(false);
     }
@@ -137,8 +137,8 @@ export default function AdminPredictionPage() {
 
   const fetchModelInfo = async () => {
     try {
-      const response = await api.get('/ml/model-info');
-      setModelInfo(response.data);
+      const response = await apiMLModelInfo();
+      setModelInfo(response);
     } catch (err) {
       console.error('Error fetching model info:', err);
     }
@@ -146,8 +146,8 @@ export default function AdminPredictionPage() {
 
   const fetchFeatureImportance = async () => {
     try {
-      const response = await api.get('/ml/feature-importance');
-      const features = response.data.feature_importance || [];
+      const response = await apiMLFeatureImportance();
+      const features = response.feature_importance || [];
       // Map to pollutant names for display
       const pollutantMap: any = {
         'pm2_5': { name: 'PM2.5', description: 'Fine particulate matter', color: '#ef4444' },

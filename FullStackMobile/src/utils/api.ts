@@ -378,3 +378,169 @@ export async function apiGenerateReport(city: string, reportType: 'daily' | 'wee
   const res = await request<{ data: any }>(`/reports/generate?city=${encodeURIComponent(city)}&report_type=${reportType}`);
   return res.data;
 }
+
+
+// ────────────────────────────────────────────────────────────────────────────
+// ── ML PREDICTIONS ───────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface MLPredictionInput {
+  pm2_5: number;
+  pm10: number;
+  no2: number;
+  so2: number;
+  co: number;
+  o3?: number;
+  hour: number;
+  month: number;
+  day_of_week?: number;
+  is_weekend?: number;
+  station: string;
+}
+
+export interface MLPredictionOutput {
+  predicted_aqi: number;
+  aqi_category: string;
+  confidence: number;
+  timestamp: string;
+  station: string;
+}
+
+export interface MLForecastPoint {
+  time: string;
+  hour: number;
+  predicted_aqi: number;
+  aqi_category: string;
+  confidence: number;
+  pollutants: {
+    pm2_5: number;
+    pm10: number;
+    no2: number;
+    so2: number;
+    co: number;
+    o3: number;
+  };
+}
+
+export interface MLForecastOutput {
+  station: string;
+  forecast: MLForecastPoint[];
+  generated_at: string;
+}
+
+export interface MLModelInfo {
+  created_at: string;
+  city: string;
+  total_records: number;
+  date_range: {
+    start: string;
+    end: string;
+  };
+  stations: string[];
+  regression_metrics: {
+    mae: number;
+    rmse: number;
+    r2: number;
+  };
+  classification_metrics: {
+    accuracy: number;
+    f1_score: number;
+  };
+  aqi_categories: string[];
+}
+
+export interface MLFeatureImportance {
+  feature: string;
+  importance: number;
+  percentage: number;
+}
+
+/**
+ * POST /ml/predict
+ * Predict AQI from pollutant data
+ */
+export async function apiMLPredict(input: MLPredictionInput): Promise<MLPredictionOutput> {
+  return request<MLPredictionOutput>('/ml/predict', {
+    method: 'POST',
+    body: input,
+  });
+}
+
+/**
+ * GET /ml/forecast/:station?hours=24
+ * Get AQI forecast for a station
+ */
+export async function apiMLForecast(station: string, hours: number = 24): Promise<MLForecastOutput> {
+  const res = await request<MLForecastOutput>(`/ml/forecast/${encodeURIComponent(station)}?hours=${hours}`);
+  return res;
+}
+
+/**
+ * GET /ml/model-info
+ * Get ML model metadata and metrics
+ */
+export async function apiMLModelInfo(): Promise<MLModelInfo> {
+  return request<MLModelInfo>('/ml/model-info');
+}
+
+/**
+ * GET /ml/feature-importance
+ * Get feature importance from trained model
+ */
+export async function apiMLFeatureImportance(): Promise<{ feature_importance: MLFeatureImportance[]; model_type: string }> {
+  return request<{ feature_importance: MLFeatureImportance[]; model_type: string }>('/ml/feature-importance');
+}
+
+/**
+ * GET /ml/stations
+ * Get available monitoring stations
+ */
+export async function apiMLStations(): Promise<{ city: string; stations: string[]; total_stations: number }> {
+  return request<{ city: string; stations: string[]; total_stations: number }>('/ml/stations');
+}
+
+/**
+ * GET /ml/health
+ * Check ML service health
+ */
+export async function apiMLHealth(): Promise<{ status: string; models_loaded: boolean; message: string }> {
+  return request<{ status: string; models_loaded: boolean; message: string }>('/ml/health');
+}
+
+// Default export for convenience
+export default {
+  // Auth
+  register: apiRegister,
+  login: apiLogin,
+  me: apiMe,
+  
+  // AQI
+  getCurrentAQI: apiGetCurrentAQI,
+  getAQIHistory: apiGetAQIHistory,
+  predictAQI: apiPredictAQI,
+  
+  // Zones & Cities
+  getCities: apiGetCities,
+  getZones: apiGetZones,
+  getMapZones: apiGetMapZones,
+  
+  // Admin
+  getDashboard: apiGetDashboard,
+  createZone: apiCreateZone,
+  deleteZone: apiDeleteZone,
+  
+  // Alerts
+  sendAlert: apiSendAlert,
+  getAlertHistory: apiGetAlertHistory,
+  
+  // Reports
+  generateReport: apiGenerateReport,
+  
+  // ML
+  mlPredict: apiMLPredict,
+  mlForecast: apiMLForecast,
+  mlModelInfo: apiMLModelInfo,
+  mlFeatureImportance: apiMLFeatureImportance,
+  mlStations: apiMLStations,
+  mlHealth: apiMLHealth,
+};
