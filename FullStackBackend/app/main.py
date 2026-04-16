@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database.database import Base, engine
-from app.routers import auth_routes, aqi_routes, zone_routes, admin_routes, alert_routes, maps_routes, report_routes
+from app.routers import auth_routes, aqi_routes, zone_routes, admin_routes, alert_routes, maps_routes, report_routes, ml_routes
 
 # ── Logging ──────────────────────────────────────────────────
 logging.basicConfig(
@@ -78,6 +78,7 @@ app.include_router(admin_routes.router,  prefix="/admin",   tags=["Admin"])
 app.include_router(alert_routes.router,  prefix="/alerts",  tags=["Alerts"])
 app.include_router(maps_routes.router,   prefix="/maps",    tags=["Maps & GeoJSON"])
 app.include_router(report_routes.router, prefix="/reports", tags=["Reports"])
+app.include_router(ml_routes.router,     prefix="/ml",      tags=["Machine Learning"])
 
 
 # ── Health check ─────────────────────────────────────────────

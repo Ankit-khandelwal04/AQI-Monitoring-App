@@ -19,7 +19,7 @@ A comprehensive Air Quality Index (AQI) monitoring system built with React Nativ
 - Alert system for high AQI zones
 - Report generation (Daily, Weekly, Monthly)
 - Historical data analysis
-- AQI prediction
+- **🤖 ML-powered AQI prediction and forecasting**
 - Settings management
 
 ## 🛠️ Tech Stack
@@ -40,6 +40,9 @@ A comprehensive Air Quality Index (AQI) monitoring system built with React Nativ
 - **Authentication**: JWT (JSON Web Tokens)
 - **Migrations**: Alembic
 - **CORS**: FastAPI CORS Middleware
+- **ML Models**: Scikit-learn (Random Forest)
+- **Data Processing**: Pandas, NumPy
+- **Visualization**: Matplotlib, Seaborn
 
 ## 📋 Prerequisites
 
@@ -147,6 +150,14 @@ npx expo start --ios      # iOS
 - `GET /aqi/history` - Get historical AQI data
 - `POST /aqi/predict` - Predict future AQI
 
+### Machine Learning
+- `POST /ml/predict` - Predict AQI from pollutant data
+- `GET /ml/forecast/{station}?hours=24` - Get AQI forecast
+- `GET /ml/model-info` - Get model metadata and metrics
+- `GET /ml/feature-importance` - Get pollutant contributions
+- `GET /ml/stations` - Get available monitoring stations
+- `GET /ml/health` - Check ML service health
+
 ### Admin
 - `GET /admin/dashboard` - Get dashboard statistics
 - `POST /admin/create-zone` - Create new zone
@@ -162,7 +173,96 @@ npx expo start --ios      # iOS
 - `POST /alerts/send` - Send alert (admin only)
 - `GET /alerts/history` - Get alert history
 
+## 🤖 ML Prediction System
+
+### Quick Start
+
+Train the ML models for AQI prediction:
+
+```bash
+cd FullStackBackend/ml
+
+# Option 1: Automated setup (recommended)
+python setup_ml.py
+
+# Option 2: PowerShell script (Windows)
+.\train_models.ps1
+
+# Option 3: Manual training
+python aqi_ml_pipeline.py
+```
+
+### What It Does
+
+- ✅ Generates 2 years of synthetic AQI data for 9 Nashik zones
+- ✅ Trains Random Forest Regressor (predicts AQI value)
+- ✅ Trains Random Forest Classifier (predicts AQI category)
+- ✅ Creates visualizations (trends, feature importance, confusion matrix)
+- ✅ Saves models for API use
+- ✅ Achieves 89%+ accuracy
+
+### Models Generated
+
+```
+ml/
+├── data/
+│   └── nashik_aqi_cleaned.csv          # 157,680 records
+├── models/
+│   ├── aqi_regressor.pkl               # Regression model
+│   ├── aqi_classifier.pkl              # Classification model
+│   ├── label_encoder.pkl               # Station encoder
+│   └── model_metadata.json             # Metrics & info
+└── plots/
+    ├── regression_pred_vs_actual.png
+    ├── regression_feature_importance.png
+    ├── classification_confusion_matrix.png
+    ├── aqi_trend_over_time.png
+    └── aqi_hourly_pattern.png
+```
+
+### Using ML Predictions
+
+Once models are trained, the Admin Prediction Page in the mobile app will:
+- Display real-time forecasts (6/12/24 hours)
+- Show interactive charts with predicted vs actual AQI
+- Display feature importance (which pollutants matter most)
+- Provide health advisories based on predictions
+- Show model accuracy and performance metrics
+
+### API Example
+
+```bash
+# Predict AQI
+curl -X POST "http://localhost:8000/ml/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pm2_5": 85.5,
+    "pm10": 120.3,
+    "no2": 45.2,
+    "so2": 18.5,
+    "co": 1.2,
+    "o3": 35.0,
+    "hour": 9,
+    "month": 12,
+    "station": "Satpur"
+  }'
+
+# Get 24-hour forecast
+curl "http://localhost:8000/ml/forecast/Satpur?hours=24"
+```
+
+For complete ML documentation, see [ML_SYSTEM_GUIDE.md](ML_SYSTEM_GUIDE.md)
+
 ## 🐛 Troubleshooting
+
+### ML Models Not Found
+
+If you see "ML models not found" error:
+
+```bash
+cd FullStackBackend/ml
+python setup_ml.py
+```
 
 ### Web Bundle Issues
 

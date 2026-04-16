@@ -12,3 +12,10 @@ pydantic[email]==2.10.3
 httpx==0.28.1
 python-multipart==0.0.20
 requests==2.32.3
+
+# ML Dependencies
+scikit-learn==1.5.2
+pandas==2.2.3
+numpy==1.26.4
+matplotlib==3.9.2
+seaborn==0.13.2
