@@ -24,7 +24,7 @@ export default function AdminLoginScreen({ onLogin, onNavigateToUserLogin, onNav
     const newErrors: { email?: string; password?: string } = {};
     if (!email) newErrors.email = 'Username or email is required';
     if (!password) newErrors.password = 'Password is required';
-    else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    // Removed minimum length requirement to allow shorter passwords
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -34,13 +34,20 @@ export default function AdminLoginScreen({ onLogin, onNavigateToUserLogin, onNav
     setIsLoading(true);
     setApiError('');
     try {
+      console.log('🔐 Admin attempting login with:', email);
       const res = await apiLogin({ email, password });
+      console.log('✅ Admin login successful:', res.user);
+      
       if (res.user.role !== 'admin') {
         setApiError('This account does not have admin privileges.');
+        setIsLoading(false);
         return;
       }
+      
+      console.log('📞 Calling onLogin callback');
       onLogin(res.user);
     } catch (err: any) {
+      console.error('❌ Admin login error:', err);
       setApiError(err.message || 'Login failed. Check your credentials.');
     } finally {
       setIsLoading(false);

@@ -52,25 +52,30 @@ function AppContent() {
 
   // ── Auth handlers ──────────────────────────────────────────────────────────
   const handleUserLogin = async (user: UserProfile) => {
+    console.log('👤 handleUserLogin called with user:', user);
     setCurrentUser(user);
     setAuthStatus('user');
     const seen = await AsyncStorage.getItem('hasSeenOnboarding');
+    console.log('📖 Onboarding seen:', seen);
     setShowOnboarding(seen !== 'true');
   };
 
   const handleUserSignUp = async (user: UserProfile) => {
+    console.log('👤 handleUserSignUp called with user:', user);
     setCurrentUser(user);
     setAuthStatus('user');
     setShowOnboarding(true);
   };
 
   const handleAdminLogin = async (user: UserProfile) => {
+    console.log('👨‍💼 handleAdminLogin called with user:', user);
     setCurrentUser(user);
     setAuthStatus('admin');
     setShowOnboarding(false);
   };
 
   const handleAdminSignUp = async (user: UserProfile) => {
+    console.log('👨‍💼 handleAdminSignUp called with user:', user);
     setCurrentUser(user);
     setAuthStatus('admin');
     setShowOnboarding(false);

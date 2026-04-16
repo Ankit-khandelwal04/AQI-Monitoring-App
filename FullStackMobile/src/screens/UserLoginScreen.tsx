@@ -25,7 +25,7 @@ export default function UserLoginScreen({ onLogin, onNavigateToSignUp, onNavigat
     if (!email) newErrors.email = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Please enter a valid email address';
     if (!password) newErrors.password = 'Password is required';
-    else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    // Removed minimum length requirement to allow shorter passwords
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -35,13 +35,20 @@ export default function UserLoginScreen({ onLogin, onNavigateToSignUp, onNavigat
     setIsLoading(true);
     setApiError('');
     try {
+      console.log('🔐 Attempting login with:', email);
       const res = await apiLogin({ email, password });
+      console.log('✅ Login successful:', res.user);
+      
       if (res.user.role !== 'user') {
         setApiError('This account is an admin account. Please use Admin Login.');
+        setIsLoading(false);
         return;
       }
+      
+      console.log('📞 Calling onLogin callback');
       onLogin(res.user);
     } catch (err: any) {
+      console.error('❌ Login error:', err);
       setApiError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
