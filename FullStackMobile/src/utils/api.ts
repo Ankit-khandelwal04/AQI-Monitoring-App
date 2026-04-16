@@ -25,7 +25,7 @@ const getApiUrl = (): string => {
     return 'http://localhost:8000';
   } else {
     // Mobile environment - update this IP when switching networks
-    return 'http://192.168.148.173:8000';
+    return 'http://192.168.0.244:8000';
   }
 };
 
