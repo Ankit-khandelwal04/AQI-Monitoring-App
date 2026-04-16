@@ -92,7 +92,7 @@ class AQIPipeline:
         
         # Generate 2 years of hourly data
         start_date = datetime.now() - timedelta(days=730)
-        dates = pd.date_range(start=start_date, periods=17520, freq='H')
+        dates = pd.date_range(start=start_date, periods=17520, freq='h')
         
         # Nashik zones
         zones = ['Satpur', 'MIDC Industrial', 'Panchavati', 'Nashik Road', 
