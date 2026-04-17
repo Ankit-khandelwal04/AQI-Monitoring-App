@@ -30,6 +30,7 @@ web-build/
 .env
 .env.local
 .env.*.local
+.env.backup
 
 # IDE
 .vscode/
