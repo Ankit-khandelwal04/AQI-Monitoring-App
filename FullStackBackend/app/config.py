@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+import warnings
 
 
 class Settings(BaseSettings):
@@ -21,7 +22,7 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",")]
+        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip() and o.strip() != "*"]
 
     class Config:
         env_file = ".env"
@@ -29,3 +30,11 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Warn if insecure defaults are used
+if settings.SECRET_KEY == "change-this-in-production":
+    warnings.warn(
+        "⚠️  SECRET_KEY is set to the default insecure value. "
+        "Set a strong SECRET_KEY in your .env file before deploying to production!",
+        stacklevel=2,
+    )

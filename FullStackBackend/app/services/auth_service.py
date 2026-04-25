@@ -31,5 +31,5 @@ def authenticate_user(db: Session, email: str, password: str) -> tuple[User, str
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
-    token = create_access_token({"sub": user.email, "role": user.role})
+    token = create_access_token({"sub": user.email, "role": user.role.value})
     return user, token

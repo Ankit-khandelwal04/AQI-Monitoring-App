@@ -14,10 +14,10 @@ def classify_aqi(aqi: float) -> dict:
     if aqi <= 50:
         return {"level": "Good",         "color": "#22c55e", "color_code": "green"}
     elif aqi <= 100:
-        return {"level": "Satisfactory", "color": "#84cc16", "color_code": "yellow"}
+        return {"level": "Satisfactory", "color": "#84cc16", "color_code": "lime"}
     elif aqi <= 200:
-        return {"level": "Moderate",     "color": "#eab308", "color_code": "orange"}
+        return {"level": "Moderate",     "color": "#eab308", "color_code": "yellow"}
     elif aqi <= 300:
-        return {"level": "Poor",         "color": "#f97316", "color_code": "red"}
+        return {"level": "Poor",         "color": "#f97316", "color_code": "orange"}
     else:
-        return {"level": "Very Poor",    "color": "#ef4444", "color_code": "purple"}
+        return {"level": "Very Poor",    "color": "#ef4444", "color_code": "red"}

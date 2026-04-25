@@ -1,7 +1,7 @@
 """
 Report generation endpoints for AQI data
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Literal
@@ -10,7 +10,7 @@ from app.database.database import get_db
 from app.models.user import User
 from app.models.city import City
 from app.models.zone import Zone
-from app.routers.auth_routes import get_current_user
+from app.utils.security import get_current_user
 from app.services import aqi_service
 from app.utils.response import success
 
@@ -33,7 +33,7 @@ def generate_report(
     """
     
     # Calculate date range based on report type
-    end_date = datetime.now()
+    end_date = datetime.now(timezone.utc)
     if report_type == "daily":
         start_date = end_date - timedelta(days=1)
     elif report_type == "weekly":

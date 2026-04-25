@@ -8,6 +8,24 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const nashikZones = ['Satpur', 'MIDC Industrial', 'Panchavati', 'Nashik Road', 'Cidco', 'College Road', 'Gangapur', 'Old Nashik', 'Deolali'];
 
+// Map UI zone names → ML model station names
+const ZONE_TO_STATION: Record<string, string> = {
+  'Satpur':         'Satpur',
+  'MIDC Industrial':'MIDC Industrial',
+  'Panchavati':     'Panchavati',
+  'Nashik Road':    'Nashik Road',
+  'Cidco':          'Cidco',
+  'College Road':   'College Road',
+  'Gangapur':       'Gangapur',
+  'Gangapur Road':  'Gangapur',
+  'Old Nashik':     'Old Nashik',
+  'Old Agra Road':  'Old Nashik',
+  'Deolali':        'Deolali',
+  'Dwarka':         'Cidco',
+  'Ashok Stambh':   'Nashik Road',
+  'Makhmalabad':    'Gangapur',
+};
+
 // Custom SVG line chart — no victory-native dependency
 function LineChart({
   actualData,
@@ -117,15 +135,21 @@ export default function AdminPredictionPage() {
   // Fetch forecast data when zone or hours change
   useEffect(() => {
     fetchForecast();
+  }, [selectedZone, predHours]);
+
+  // Fetch model info and feature importance once on mount only
+  useEffect(() => {
     fetchModelInfo();
     fetchFeatureImportance();
-  }, [selectedZone, predHours]);
+  }, []);
 
   const fetchForecast = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiMLForecast(selectedZone, predHours);
+      // Map UI zone name to ML model station name
+      const station = ZONE_TO_STATION[selectedZone] ?? selectedZone;
+      const response = await apiMLForecast(station, predHours);
       setForecastData(response.forecast || []);
     } catch (err: any) {
       console.error('Error fetching forecast:', err);

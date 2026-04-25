@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions
+  View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Rect, Line, Text as SvgText } from 'react-native-svg';
 import { nashikAreas, generateHourlyData, getAQICategory } from '../utils/aqiUtils';
+import { apiGetAQIHistory } from '../utils/api';
 
 interface GraphViewScreenProps {
   selectedArea: string;
@@ -94,15 +95,52 @@ function AQIBarChart({ data }: { data: { x: string; y: number; color: string }[]
 }
 
 export default function GraphViewScreen({ selectedArea, selectedDate, onBack }: GraphViewScreenProps) {
-  const area = nashikAreas.find(a => a.name === selectedArea) || nashikAreas[0];
-  const hourlyData = generateHourlyData(area.aqi);
+  const area = nashikAreas.find(a => a.name === selectedArea) ?? nashikAreas[0];
+  const [chartData, setChartData] = useState<{ x: string; y: number; color: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [usingFallback, setUsingFallback] = useState(false);
 
-  // Show every 3rd hour on x-axis to avoid crowding
-  const chartData = hourlyData.map((d, i) => ({
-    x: i % 3 === 0 ? d.time : '',
-    y: d.aqi,
-    color: getAQICategory(d.aqi).color,
-  }));
+  useEffect(() => {
+    const fetchHistory = async () => {
+      setIsLoading(true);
+      setUsingFallback(false);
+      try {
+        // Build date range: start = beginning of selectedDate, end = end of selectedDate
+        const start = new Date(selectedDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(selectedDate);
+        end.setHours(23, 59, 59, 999);
+
+        // We need a zone_id — use area index as fallback since we don't have real zone ID here
+        const areaIndex = nashikAreas.findIndex(a => a.name === selectedArea);
+        const zoneId = areaIndex >= 0 ? areaIndex + 1 : 1;
+
+        const readings = await apiGetAQIHistory(zoneId, start.toISOString(), end.toISOString());
+        if (readings.length > 0) {
+          const mapped = readings.map((r, i) => ({
+            x: i % 3 === 0 ? new Date(r.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false }) : '',
+            y: r.aqi_value,
+            color: getAQICategory(r.aqi_value).color,
+          }));
+          setChartData(mapped);
+        } else {
+          throw new Error('No readings');
+        }
+      } catch {
+        // Fallback to generated data
+        setUsingFallback(true);
+        const hourlyData = generateHourlyData(area.aqi);
+        setChartData(hourlyData.map((d, i) => ({
+          x: i % 3 === 0 ? d.time : '',
+          y: d.aqi,
+          color: getAQICategory(d.aqi).color,
+        })));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [selectedArea, selectedDate]);
 
   return (
     <View style={styles.container}>
@@ -123,11 +161,29 @@ export default function GraphViewScreen({ selectedArea, selectedDate, onBack }: 
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Loading */}
+        {isLoading && (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color="#2563eb" />
+            <Text style={styles.loadingText}>Loading history…</Text>
+          </View>
+        )}
+
+        {/* Fallback notice */}
+        {!isLoading && usingFallback && (
+          <View style={styles.fallbackBanner}>
+            <Ionicons name="information-circle-outline" size={15} color="#d97706" />
+            <Text style={styles.fallbackText}>Showing simulated data — backend unavailable</Text>
+          </View>
+        )}
+
         {/* Bar Chart Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Hour-wise AQI</Text>
-          <AQIBarChart data={chartData} />
-        </View>
+        {!isLoading && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Hour-wise AQI</Text>
+            <AQIBarChart data={chartData} />
+          </View>
+        )}
 
         {/* Legend */}
         <View style={styles.card}>
@@ -167,4 +223,12 @@ const styles = StyleSheet.create({
   legendDot: { width: 20, height: 20, borderRadius: 5 },
   legendLevel: { flex: 1, fontSize: 13, fontWeight: '600', color: '#111827' },
   legendRange: { fontSize: 13, color: '#6b7280' },
+  loadingBox: { padding: 40, alignItems: 'center', gap: 12 },
+  loadingText: { fontSize: 14, color: '#6b7280' },
+  fallbackBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#fffbeb', borderWidth: 1, borderColor: '#fde68a',
+    borderRadius: 12, padding: 12, marginBottom: 4,
+  },
+  fallbackText: { flex: 1, fontSize: 12, color: '#92400e', fontWeight: '500' },
 });

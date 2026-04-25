@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, StyleSheet,
-  Modal, FlatList, Platform
+  Modal, FlatList, Platform, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getAQICategory, nashikAreas } from '../utils/aqiUtils';
+import { apiGetCurrentAQI } from '../utils/api';
 
 // Conditional imports for platform-specific components
 let DateTimePicker: any;
@@ -17,7 +18,6 @@ let PROVIDER_GOOGLE: any;
 if (Platform.OS === 'web') {
   DateTimePicker = require('../components/DateTimePicker.web').default;
   MapView = require('../components/MapView.web').default;
-  // Web doesn't need these
   Marker = View;
   Circle = View;
   Callout = View;
@@ -46,16 +46,33 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
   const [showZonePicker, setShowZonePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  
+  const [liveAQI, setLiveAQI] = useState<number | null>(null);
+  const [isLoadingAQI, setIsLoadingAQI] = useState(false);
+  const [aqiError, setAqiError] = useState('');
+
   // Map reference for animating to selected zone
   const mapRef = useRef<any>(null);
 
-  const selectedArea = nashikAreas.find(a => a.name === selectedZone) || nashikAreas[0];
-  const aqiCategory = getAQICategory(selectedArea.aqi);
+  // Null-safe area lookup
+  const selectedArea = nashikAreas.find(a => a.name === selectedZone) ?? nashikAreas[0];
+  const displayAQI = liveAQI ?? selectedArea.aqi;
+  const aqiCategory = getAQICategory(displayAQI);
   const lastUpdated = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-  const handleShowAQI = () => {
+  const handleShowAQI = async () => {
     if (selectedZone && selectedDate && selectedTime) {
+      setIsLoadingAQI(true);
+      setAqiError('');
+      setLiveAQI(null);
+      try {
+        const data = await apiGetCurrentAQI('Nashik', selectedZone);
+        setLiveAQI(data.aqi_value);
+      } catch (err: any) {
+        // Gracefully fall back to local static data
+        setAqiError('Using cached data — backend unreachable.');
+      } finally {
+        setIsLoadingAQI(false);
+      }
       setShowResults(true);
       // Animate map to selected zone
       setTimeout(() => {
@@ -68,6 +85,7 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
       }, 300);
     }
   };
+
 
   const formatDate = (d: Date) => d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const formatTime = (t: Date) => t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -141,21 +159,31 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
           <TouchableOpacity
             style={[styles.btn, !isFormComplete && styles.btnDisabled]}
             onPress={handleShowAQI}
-            disabled={!isFormComplete}
+            disabled={!isFormComplete || isLoadingAQI}
             activeOpacity={0.85}
           >
-            <Text style={[styles.btnText, !isFormComplete && styles.btnTextDisabled]}>Show AQI</Text>
+            {isLoadingAQI
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={[styles.btnText, !isFormComplete && styles.btnTextDisabled]}>Show AQI</Text>}
           </TouchableOpacity>
         </View>
 
         {/* AQI Results */}
         {showResults && selectedZone && (
           <>
+            {/* Fallback banner */}
+            {aqiError ? (
+              <View style={styles.warningBanner}>
+                <Ionicons name="information-circle-outline" size={15} color="#d97706" />
+                <Text style={styles.warningBannerText}>{aqiError}</Text>
+              </View>
+            ) : null}
+
             {/* AQI Card */}
             <View style={[styles.aqiCard, { backgroundColor: aqiCategory.color }]}>
               <View style={styles.aqiCardTop}>
                 <Text style={styles.aqiLabel}>Air Quality Index</Text>
-                <Text style={styles.aqiValue}>{selectedArea.aqi}</Text>
+                <Text style={styles.aqiValue}>{displayAQI}</Text>
                 <View style={styles.aqiLevelBadge}>
                   <Text style={styles.aqiLevel}>{aqiCategory.level}</Text>
                 </View>
@@ -256,7 +284,7 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
             </View>
 
             {/* Health Advisory */}
-            {selectedArea.aqi > 100 && (
+            {displayAQI > 100 && (
               <View style={[styles.advisory, { borderLeftColor: aqiCategory.color, backgroundColor: aqiCategory.color + '15' }]}>
                 <View style={[styles.advisoryIcon, { backgroundColor: aqiCategory.color + '30' }]}>
                   <Ionicons name="warning-outline" size={20} color={aqiCategory.color} />
@@ -264,9 +292,9 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
                 <View style={{ flex: 1 }}>
                   <Text style={styles.advisoryTitle}>Health Advisory</Text>
                   <Text style={styles.advisoryText}>
-                    {selectedArea.aqi > 300
+                    {displayAQI > 300
                       ? "Stay indoors. Avoid all outdoor activities. Use air purifiers and N95 masks if going outside is necessary."
-                      : selectedArea.aqi > 200
+                      : displayAQI > 200
                         ? "Limit outdoor activities. Vulnerable groups should stay indoors. Wear masks when outside."
                         : "Sensitive individuals should consider reducing prolonged outdoor exertion."}
                   </Text>
@@ -484,4 +512,10 @@ const styles = StyleSheet.create({
   modalItemActive: { backgroundColor: '#eff6ff' },
   modalItemText: { fontSize: 15, color: '#374151' },
   modalItemTextActive: { color: '#2563eb', fontWeight: '600' },
+  warningBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#fffbeb', borderWidth: 1, borderColor: '#fde68a',
+    borderRadius: 12, padding: 12,
+  },
+  warningBannerText: { flex: 1, fontSize: 12, color: '#92400e', fontWeight: '500' },
 });

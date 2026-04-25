@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions, Modal, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Rect, Line, Text as SvgText } from 'react-native-svg';
@@ -7,8 +7,26 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const nashikZones = ['Cidco', 'Nashik Road', 'College Road', 'Gangapur Road', 'Satpur', 'Panchavati'];
 
-const generateHistory = (baseAqi: number) => {
-  const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+type TimePeriod = '1month' | '3months' | '6months' | '1year';
+
+const TIME_PERIODS = [
+  { id: '1month' as TimePeriod, label: '1 Month', months: 1 },
+  { id: '3months' as TimePeriod, label: '3 Months', months: 3 },
+  { id: '6months' as TimePeriod, label: '6 Months', months: 6 },
+  { id: '1year' as TimePeriod, label: '1 Year', months: 12 },
+];
+
+const generateHistory = (baseAqi: number, monthCount: number) => {
+  const allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const currentMonth = new Date().getMonth(); // 0-11
+  const months: string[] = [];
+  
+  // Generate month labels going backwards from current month
+  for (let i = monthCount - 1; i >= 0; i--) {
+    const monthIndex = (currentMonth - i + 12) % 12;
+    months.push(allMonths[monthIndex]);
+  }
+  
   return months.map((m, i) => ({
     x: i + 1,
     y: Math.round(baseAqi + (Math.random() * 60 - 30)),
@@ -16,14 +34,33 @@ const generateHistory = (baseAqi: number) => {
   }));
 };
 
-const pollutantHistory = [
-  { name: 'PM2.5', trend: [32, 38, 45, 41, 36, 42], color: '#ef4444' },
-  { name: 'PM10', trend: [48, 55, 62, 58, 51, 57], color: '#f97316' },
-  { name: 'NO₂', trend: [35, 39, 44, 40, 36, 41], color: '#eab308' },
-  { name: 'CO', trend: [1.1, 1.3, 1.5, 1.4, 1.2, 1.3], color: '#8b5cf6' },
-];
+const pollutantHistory = (monthCount: number) => {
+  const generateTrend = (base: number) => {
+    return Array.from({ length: monthCount }, () => 
+      Math.round((base + (Math.random() * 20 - 10)) * 10) / 10
+    );
+  };
+  
+  return [
+    { name: 'PM2.5', trend: generateTrend(38), color: '#ef4444' },
+    { name: 'PM10', trend: generateTrend(55), color: '#f97316' },
+    { name: 'NO₂', trend: generateTrend(40), color: '#eab308' },
+    { name: 'CO', trend: generateTrend(1.3), color: '#8b5cf6' },
+  ];
+};
 
-const MONTHS = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+const getMonthLabels = (monthCount: number) => {
+  const allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const currentMonth = new Date().getMonth();
+  const months: string[] = [];
+  
+  for (let i = monthCount - 1; i >= 0; i--) {
+    const monthIndex = (currentMonth - i + 12) % 12;
+    months.push(allMonths[monthIndex]);
+  }
+  
+  return months;
+};
 
 // Custom SVG Bar Chart — no victory-native dependency
 function BarChart({ data }: { data: { y: number; month: string }[] }) {
@@ -106,12 +143,63 @@ function BarChart({ data }: { data: { y: number; month: string }[] }) {
 export default function AdminHistoricalPage() {
   const [selectedZone, setSelectedZone] = useState('Cidco');
   const [showZonePicker, setShowZonePicker] = useState(false);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('6months');
 
-  const baseAqi = 120;
-  const historyData = generateHistory(baseAqi);
-  const avgAqi = Math.round(historyData.reduce((s, d) => s + d.y, 0) / historyData.length);
-  const maxAqi = Math.max(...historyData.map(d => d.y));
-  const minAqi = Math.min(...historyData.map(d => d.y));
+  const selectedPeriod = TIME_PERIODS.find(p => p.id === timePeriod)!;
+  
+  // Memoize data generation so it doesn't change on every render
+  const historyData = useMemo(() => {
+    const baseAqi = 120;
+    return generateHistory(baseAqi, selectedPeriod.months);
+  }, [selectedPeriod.months, selectedZone]);
+  
+  const pollutants = useMemo(() => {
+    return pollutantHistory(selectedPeriod.months);
+  }, [selectedPeriod.months, selectedZone]);
+  
+  const monthLabels = useMemo(() => {
+    return getMonthLabels(selectedPeriod.months);
+  }, [selectedPeriod.months]);
+  
+  const avgAqi = useMemo(() => {
+    return Math.round(historyData.reduce((s, d) => s + d.y, 0) / historyData.length);
+  }, [historyData]);
+  
+  const maxAqi = useMemo(() => {
+    return Math.max(...historyData.map(d => d.y));
+  }, [historyData]);
+  
+  const minAqi = useMemo(() => {
+    return Math.min(...historyData.map(d => d.y));
+  }, [historyData]);
+  
+  // Memoize table data with stable peak values
+  const tableData = useMemo(() => {
+    return historyData.map((d, i) => ({
+      month: monthLabels[i],
+      avgAqi: d.y,
+      peakAqi: d.y + Math.round(Math.random() * 20), // Generate once and cache
+      category: d.y <= 50 ? { color: '#22c55e', label: 'Good' }
+        : d.y <= 100 ? { color: '#84cc16', label: 'Satisfactory' }
+        : d.y <= 200 ? { color: '#eab308', label: 'Moderate' }
+        : d.y <= 300 ? { color: '#f97316', label: 'Poor' }
+        : { color: '#ef4444', label: 'Very Poor' }
+    }));
+  }, [historyData, monthLabels]);
+  
+  // Calculate date range for subtitle
+  const getDateRange = () => {
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setMonth(now.getMonth() - selectedPeriod.months + 1);
+    
+    const formatMonth = (date: Date) => {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[date.getMonth()]} ${date.getFullYear()}`;
+    };
+    
+    return `${formatMonth(startDate)} – ${formatMonth(now)}`;
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -119,13 +207,37 @@ export default function AdminHistoricalPage() {
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.pageTitle}>Historical Data</Text>
-          <Text style={styles.pageSub}>6-month AQI archive · Oct 2025 – Mar 2026</Text>
+          <Text style={styles.pageSub}>{selectedPeriod.label} AQI archive · {getDateRange()}</Text>
         </View>
         <TouchableOpacity style={styles.zoneSelector} onPress={() => setShowZonePicker(true)}>
           <Ionicons name="location-outline" size={14} color="#9ca3af" />
           <Text style={styles.zoneSelectorText}>{selectedZone}</Text>
           <Ionicons name="chevron-down" size={14} color="#9ca3af" />
         </TouchableOpacity>
+      </View>
+
+      {/* Time Period Selector */}
+      <View style={styles.periodSelector}>
+        <Text style={styles.periodLabel}>Time Period:</Text>
+        <View style={styles.periodButtons}>
+          {TIME_PERIODS.map(period => (
+            <TouchableOpacity
+              key={period.id}
+              style={[
+                styles.periodButton,
+                timePeriod === period.id && styles.periodButtonActive
+              ]}
+              onPress={() => setTimePeriod(period.id)}
+            >
+              <Text style={[
+                styles.periodButtonText,
+                timePeriod === period.id && styles.periodButtonTextActive
+              ]}>
+                {period.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* Summary Stats */}
@@ -152,7 +264,7 @@ export default function AdminHistoricalPage() {
       {/* Pollutant Trend Lines (mini bars) */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Pollutant Trends (µg/m³)</Text>
-        {pollutantHistory.map(p => (
+        {pollutants.map(p => (
           <View key={p.name} style={styles.pollutantRow}>
             <View style={styles.pollutantMeta}>
               <View style={[styles.pollutantDot, { backgroundColor: p.color }]} />
@@ -172,7 +284,7 @@ export default function AdminHistoricalPage() {
           </View>
         ))}
         <View style={styles.monthsRow}>
-          {MONTHS.map(m => <Text key={m} style={styles.monthLabel}>{m}</Text>)}
+          {monthLabels.map(m => <Text key={m} style={styles.monthLabel}>{m}</Text>)}
         </View>
       </View>
 
@@ -185,22 +297,18 @@ export default function AdminHistoricalPage() {
           <Text style={[styles.tableHeaderCell, { flex: 1, textAlign: 'right' }]}>Peak AQI</Text>
           <Text style={[styles.tableHeaderCell, { flex: 1.5, textAlign: 'right' }]}>Category</Text>
         </View>
-        {historyData.map((d, i) => {
-          const cat = d.y <= 50 ? '#22c55e' : d.y <= 100 ? '#84cc16' : d.y <= 200 ? '#eab308' : d.y <= 300 ? '#f97316' : '#ef4444';
-          const label = d.y <= 50 ? 'Good' : d.y <= 100 ? 'Satisfactory' : d.y <= 200 ? 'Moderate' : d.y <= 300 ? 'Poor' : 'Very Poor';
-          return (
-            <View key={i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-              <Text style={[styles.tableCell, { flex: 1.5 }]}>{MONTHS[i]}</Text>
-              <Text style={[styles.tableCell, { flex: 1, textAlign: 'right', fontWeight: '700' }]}>{d.y}</Text>
-              <Text style={[styles.tableCell, { flex: 1, textAlign: 'right' }]}>{d.y + Math.round(Math.random() * 20)}</Text>
-              <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
-                <View style={[styles.catBadge, { backgroundColor: cat + '20' }]}>
-                  <Text style={[styles.catBadgeText, { color: cat }]}>{label}</Text>
-                </View>
+        {tableData.map((row, i) => (
+          <View key={i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
+            <Text style={[styles.tableCell, { flex: 1.5 }]}>{row.month}</Text>
+            <Text style={[styles.tableCell, { flex: 1, textAlign: 'right', fontWeight: '700' }]}>{row.avgAqi}</Text>
+            <Text style={[styles.tableCell, { flex: 1, textAlign: 'right' }]}>{row.peakAqi}</Text>
+            <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
+              <View style={[styles.catBadge, { backgroundColor: row.category.color + '20' }]}>
+                <Text style={[styles.catBadgeText, { color: row.category.color }]}>{row.category.label}</Text>
               </View>
             </View>
-          );
-        })}
+          </View>
+        ))}
       </View>
 
       {/* Zone Modal */}
@@ -235,6 +343,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 8,
   },
   zoneSelectorText: { fontSize: 12, color: '#374151', fontWeight: '600' },
+  periodSelector: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  periodLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 10,
+  },
+  periodButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  periodButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+  },
+  periodButtonActive: {
+    backgroundColor: '#d97706',
+    borderColor: '#d97706',
+  },
+  periodButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  periodButtonTextActive: {
+    color: '#fff',
+  },
   statsRow: { flexDirection: 'row', gap: 10 },
   statCard: {
     flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 14, alignItems: 'center',

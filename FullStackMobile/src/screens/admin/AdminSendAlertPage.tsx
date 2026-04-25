@@ -5,8 +5,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { apiSendAlert, apiGetCities, apiGetZones, Zone, AlertSeverity } from '../../utils/api';
 
-const nashikZones = ['All Zones', 'Satpur', 'MIDC Industrial', 'Panchavati', 'Nashik Road', 'Cidco', 'College Road', 'Gangapur', 'Old Nashik', 'Deolali'];
-
 const ALERT_TYPES = [
   { id: 'emergency', label: 'Emergency Alert', desc: 'Immediate danger — severe AQI > 400', color: '#dc2626', icon: 'skull-outline' },
   { id: 'warning', label: 'Health Warning', desc: 'Significant health risk — AQI 300-400', color: '#d97706', icon: 'warning-outline' },
