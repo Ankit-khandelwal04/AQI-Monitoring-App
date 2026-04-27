@@ -12,6 +12,7 @@ pydantic[email]==2.10.3
 httpx==0.28.1
 python-multipart==0.0.20
 requests==2.32.3
+gunicorn==21.2.0
 
 # ML Dependencies
 scikit-learn==1.5.2

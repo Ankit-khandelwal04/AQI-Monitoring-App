@@ -117,11 +117,11 @@ npx expo start --ios      # iOS
 
 ### Admin Account
 - Email: `admin@nashikaqi.in`
-- Password: `admin@123`
+- Password: `Admin@123`
 
 ### User Account
 - Email: `ankit@nashikaqi.in`
-- Password: `user@1234`
+- Password: `User@1234`
 
 ## 📱 Platform Support
 
