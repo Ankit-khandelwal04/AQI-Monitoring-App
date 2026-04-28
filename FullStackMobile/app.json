@@ -38,12 +38,13 @@
         }
       }
     },
-    "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "webpack"
-    },
     "plugins": [
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ba72bd2b-4c51-45be-b068-dfc6a1333b42"
+      }
+    }
   }
 }
