@@ -63,6 +63,13 @@ async def startup_event():
     # Tables are created via Alembic migrations; this is a safety net for dev
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables verified.")
+    
+    # Automatically seed database if empty (for free tier deployment)
+    try:
+        from seed_on_startup import seed_database_on_startup
+        seed_database_on_startup()
+    except Exception as e:
+        logger.warning(f"Automatic seed skipped or failed: {e}")
 
 
 @app.on_event("shutdown")
