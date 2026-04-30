@@ -66,10 +66,19 @@ async def startup_event():
     
     # Automatically seed database if empty (for free tier deployment)
     try:
+        import sys
+        from pathlib import Path
+        # Add parent directory to path to import seed_on_startup
+        parent_dir = Path(__file__).parent.parent.parent
+        if str(parent_dir) not in sys.path:
+            sys.path.insert(0, str(parent_dir))
         from seed_on_startup import seed_database_on_startup
         seed_database_on_startup()
+        logger.info("✅ Database seeding completed")
     except Exception as e:
-        logger.warning(f"Automatic seed skipped or failed: {e}")
+        logger.error(f"❌ Automatic seed failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
 
 @app.on_event("shutdown")
