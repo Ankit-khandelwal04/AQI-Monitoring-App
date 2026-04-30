@@ -114,3 +114,31 @@ def root():
 @app.get("/health", tags=["Health"])
 def health():
     return {"status": "success", "data": {"healthy": True}}
+
+
+@app.get("/seed-now", tags=["Health"])
+def seed_now():
+    """Emergency seeding endpoint - call this if database is empty"""
+    try:
+        import sys
+        from pathlib import Path
+        parent_dir = Path(__file__).parent.parent.parent
+        if str(parent_dir) not in sys.path:
+            sys.path.insert(0, str(parent_dir))
+        from seed_on_startup import seed_database_on_startup
+        seed_database_on_startup()
+        return {
+            "status": "success",
+            "message": "Database seeding triggered",
+            "credentials": {
+                "admin": "admin@nashikaqi.in / admin@123",
+                "user": "ankit@nashikaqi.in / user@1234"
+            }
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
