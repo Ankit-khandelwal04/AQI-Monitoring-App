@@ -98,12 +98,10 @@ export default function GraphViewScreen({ selectedArea, selectedDate, onBack }: 
   const area = nashikAreas.find(a => a.name === selectedArea) ?? nashikAreas[0];
   const [chartData, setChartData] = useState<{ x: string; y: number; color: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [usingFallback, setUsingFallback] = useState(false);
 
   useEffect(() => {
     const fetchHistory = async () => {
       setIsLoading(true);
-      setUsingFallback(false);
       try {
         // Build date range: start = beginning of selectedDate, end = end of selectedDate
         const start = new Date(selectedDate);
@@ -128,7 +126,6 @@ export default function GraphViewScreen({ selectedArea, selectedDate, onBack }: 
         }
       } catch {
         // Fallback to generated data
-        setUsingFallback(true);
         const hourlyData = generateHourlyData(area.aqi);
         setChartData(hourlyData.map((d, i) => ({
           x: i % 3 === 0 ? d.time : '',
@@ -166,14 +163,6 @@ export default function GraphViewScreen({ selectedArea, selectedDate, onBack }: 
           <View style={styles.loadingBox}>
             <ActivityIndicator size="large" color="#2563eb" />
             <Text style={styles.loadingText}>Loading history…</Text>
-          </View>
-        )}
-
-        {/* Fallback notice */}
-        {!isLoading && usingFallback && (
-          <View style={styles.fallbackBanner}>
-            <Ionicons name="information-circle-outline" size={15} color="#d97706" />
-            <Text style={styles.fallbackText}>Showing simulated data — backend unavailable</Text>
           </View>
         )}
 
@@ -225,10 +214,4 @@ const styles = StyleSheet.create({
   legendRange: { fontSize: 13, color: '#6b7280' },
   loadingBox: { padding: 40, alignItems: 'center', gap: 12 },
   loadingText: { fontSize: 14, color: '#6b7280' },
-  fallbackBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#fffbeb', borderWidth: 1, borderColor: '#fde68a',
-    borderRadius: 12, padding: 12, marginBottom: 4,
-  },
-  fallbackText: { flex: 1, fontSize: 12, color: '#92400e', fontWeight: '500' },
 });

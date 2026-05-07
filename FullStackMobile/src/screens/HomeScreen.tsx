@@ -68,8 +68,8 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
         const data = await apiGetCurrentAQI('Nashik', selectedZone);
         setLiveAQI(data.aqi_value);
       } catch (err: any) {
-        // Gracefully fall back to local static data
-        setAqiError('Using cached data — backend unreachable.');
+        // Gracefully fall back to local static data (silently)
+        // No error message shown to user
       } finally {
         setIsLoadingAQI(false);
       }
