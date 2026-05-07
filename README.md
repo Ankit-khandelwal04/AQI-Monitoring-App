@@ -44,6 +44,228 @@ A comprehensive Air Quality Index (AQI) monitoring system built with React Nativ
 - **Data Processing**: Pandas, NumPy
 - **Visualization**: Matplotlib, Seaborn
 
+## 📁 Complete Folder Structure
+
+```
+Full Stack/
+│
+├── FullStackBackend/                    # Backend (FastAPI + PostgreSQL)
+│   ├── alembic/                         # Database migrations
+│   │   ├── versions/                    # Migration scripts
+│   │   │   ├── 835cbadf6d2e_initial_schema.py
+│   │   │   └── .gitkeep
+│   │   ├── env.py                       # Alembic environment config
+│   │   └── script.py.mako               # Migration template
+│   │
+│   ├── app/                             # Main application code
+│   │   ├── database/                    # Database configuration
+│   │   │   ├── database.py              # SQLAlchemy setup
+│   │   │   └── __init__.py
+│   │   │
+│   │   ├── models/                      # SQLAlchemy models (database tables)
+│   │   │   ├── user.py                  # User model
+│   │   │   ├── city.py                  # City model
+│   │   │   ├── zone.py                  # Zone model
+│   │   │   ├── aqi_reading.py           # AQI reading model
+│   │   │   ├── alert.py                 # Alert model
+│   │   │   └── __init__.py
+│   │   │
+│   │   ├── routers/                     # API route handlers
+│   │   │   ├── auth_routes.py           # Authentication endpoints
+│   │   │   ├── aqi_routes.py            # AQI data endpoints
+│   │   │   ├── zone_routes.py           # Zone management endpoints
+│   │   │   ├── alert_routes.py          # Alert endpoints
+│   │   │   ├── map_routes.py            # Map/GeoJSON endpoints
+│   │   │   ├── ml_routes.py             # ML prediction endpoints
+│   │   │   ├── report_routes.py         # Report generation endpoints
+│   │   │   └── setup_routes.py          # Setup/seeding endpoints
+│   │   │
+│   │   ├── schemas/                     # Pydantic schemas (validation)
+│   │   │   ├── user_schema.py           # User request/response schemas
+│   │   │   ├── aqi_schema.py            # AQI schemas
+│   │   │   ├── zone_schema.py           # Zone schemas
+│   │   │   ├── alert_schema.py          # Alert schemas
+│   │   │   └── __init__.py
+│   │   │
+│   │   ├── services/                    # Business logic layer
+│   │   │   ├── auth_service.py          # Authentication logic
+│   │   │   ├── aqi_service.py           # AQI data processing
+│   │   │   ├── zone_service.py          # Zone management logic
+│   │   │   ├── alert_service.py         # Alert logic
+│   │   │   ├── maps_service.py          # GeoJSON processing
+│   │   │   └── __init__.py
+│   │   │
+│   │   ├── utils/                       # Utility functions
+│   │   │   ├── security.py              # JWT, password hashing
+│   │   │   ├── response.py              # Standard API responses
+│   │   │   ├── geojson_utils.py         # GeoJSON helpers
+│   │   │   └── __init__.py
+│   │   │
+│   │   ├── config.py                    # App configuration
+│   │   ├── main.py                      # FastAPI app entry point
+│   │   └── __init__.py
+│   │
+│   ├── ml/                              # Machine Learning pipeline
+│   │   ├── data/                        # Training data
+│   │   │   └── nashik_aqi_cleaned.csv   # 157,680 records (2 years, 9 zones)
+│   │   │
+│   │   ├── models/                      # Trained ML models (not in git)
+│   │   │   ├── aqi_regressor.pkl        # Random Forest Regressor
+│   │   │   ├── aqi_classifier.pkl       # Random Forest Classifier
+│   │   │   ├── label_encoder.pkl        # Station name encoder
+│   │   │   └── model_metadata.json      # Model metrics and info
+│   │   │
+│   │   ├── plots/                       # Visualizations
+│   │   │   ├── aqi_trend_over_time.png
+│   │   │   ├── aqi_hourly_pattern.png
+│   │   │   ├── regression_pred_vs_actual.png
+│   │   │   ├── regression_feature_importance.png
+│   │   │   └── classification_confusion_matrix.png
+│   │   │
+│   │   ├── aqi_ml_pipeline.py           # Complete ML pipeline
+│   │   ├── setup_ml.py                  # Automated ML setup
+│   │   ├── train_models.ps1             # PowerShell training script
+│   │   └── README.md                    # ML documentation
+│   │
+│   ├── scripts/                         # Utility scripts
+│   │   ├── seed.py                      # Database seeding script
+│   │   ├── seed_db.py                   # Alternative seeding
+│   │   ├── health_check.py              # API health check
+│   │   ├── verify_api.py                # API verification
+│   │   └── debug_ml.py                  # ML debugging
+│   │
+│   ├── venv/                            # Python virtual environment (not in git)
+│   ├── .env                             # Environment variables (not in git)
+│   ├── .env.example                     # Environment template
+│   ├── .gitignore                       # Git ignore rules
+│   ├── alembic.ini                      # Alembic configuration
+│   ├── docker-compose.yml               # Docker setup
+│   ├── Dockerfile                       # Docker image
+│   ├── requirements.txt                 # Python dependencies
+│   ├── pyrightconfig.json               # Python type checking config
+│   ├── seed_on_startup.py               # Auto-seed on app start
+│   ├── test_login.py                    # Login testing script
+│   ├── recreate_venv.ps1                # Virtual env recreation script
+│   ├── fix_backend.ps1                  # Backend fix script
+│   ├── fix_all_dependencies.py          # Dependency fix script
+│   ├── fix_pydantic.py                  # Pydantic fix script
+│   ├── fix_pydantic.ps1                 # Pydantic fix PowerShell
+│   ├── fix_now.bat                      # Quick fix batch script
+│   ├── get_credentials.py               # Credential helper
+│   └── README.md                        # Backend documentation
+│
+├── FullStackMobile/                     # Frontend (React Native + Expo)
+│   ├── .expo/                           # Expo build cache (not in git)
+│   │   ├── web/cache/                   # Web build cache
+│   │   ├── devices.json                 # Connected devices
+│   │   └── README.md
+│   │
+│   ├── assets/                          # Static assets
+│   │   ├── images/                      # Image files
+│   │   ├── fonts/                       # Custom fonts
+│   │   └── icon.png                     # App icon
+│   │
+│   ├── src/                             # Source code
+│   │   ├── components/                  # Reusable components
+│   │   │   ├── AQICard.tsx              # AQI display card
+│   │   │   ├── ZoneCard.tsx             # Zone display card
+│   │   │   ├── BottomNav.tsx            # Bottom navigation
+│   │   │   ├── ErrorBoundary.tsx        # Error handling wrapper
+│   │   │   └── LoadingSpinner.tsx       # Loading indicator
+│   │   │
+│   │   ├── screens/                     # Screen components
+│   │   │   ├── admin/                   # Admin screens
+│   │   │   │   ├── AdminDashboard.tsx   # Admin main dashboard
+│   │   │   │   ├── AdminMapPage.tsx     # Admin map view
+│   │   │   │   ├── AdminAlertsPage.tsx  # Alert management
+│   │   │   │   ├── AdminReportsPage.tsx # Report generation
+│   │   │   │   ├── AdminPredictionPage.tsx # ML predictions
+│   │   │   │   ├── AdminSettingsPage.tsx # Settings
+│   │   │   │   └── AdminHistoryPage.tsx # Historical data
+│   │   │   │
+│   │   │   ├── user/                    # User screens
+│   │   │   │   ├── HomeScreen.tsx       # User home screen
+│   │   │   │   ├── MapScreen.tsx        # User map view
+│   │   │   │   ├── HistoryScreen.tsx    # Historical data
+│   │   │   │   └── ProfileScreen.tsx    # User profile
+│   │   │   │
+│   │   │   ├── LoginScreen.tsx          # Login screen
+│   │   │   └── RegisterScreen.tsx       # Registration screen
+│   │   │
+│   │   ├── services/                    # API services
+│   │   │   ├── api.ts                   # API client configuration
+│   │   │   ├── authService.ts           # Authentication API calls
+│   │   │   ├── aqiService.ts            # AQI data API calls
+│   │   │   ├── zoneService.ts           # Zone API calls
+│   │   │   ├── alertService.ts          # Alert API calls
+│   │   │   ├── mlService.ts             # ML prediction API calls
+│   │   │   └── reportService.ts         # Report API calls
+│   │   │
+│   │   ├── types/                       # TypeScript type definitions
+│   │   │   ├── auth.types.ts            # Authentication types
+│   │   │   ├── aqi.types.ts             # AQI data types
+│   │   │   ├── zone.types.ts            # Zone types
+│   │   │   ├── alert.types.ts           # Alert types
+│   │   │   └── ml.types.ts              # ML prediction types
+│   │   │
+│   │   └── utils/                       # Utility functions
+│   │       ├── storage.ts               # AsyncStorage helpers
+│   │       ├── dateUtils.ts             # Date formatting
+│   │       └── aqiUtils.ts              # AQI calculation helpers
+│   │
+│   ├── node_modules/                    # NPM dependencies (not in git)
+│   ├── .env                             # Environment variables (not in git)
+│   ├── .env.example                     # Environment template
+│   ├── .gitignore                       # Git ignore rules
+│   ├── app.json                         # Expo app configuration
+│   ├── eas.json                         # EAS Build configuration
+│   ├── App.tsx                          # Root component
+│   ├── index.ts                         # Entry point
+│   ├── package.json                     # NPM dependencies
+│   ├── package-lock.json                # Dependency lock file
+│   ├── tsconfig.json                    # TypeScript configuration
+│   ├── tailwind.config.js               # Tailwind CSS config
+│   ├── metro.config.js                  # Metro bundler config
+│   ├── webpack.config.js                # Webpack config (web)
+│   ├── babel.config.js                  # Babel configuration
+│   ├── build-apk.ps1                    # APK build script
+│   ├── fix-web-bundle.ps1               # Web bundle fix script
+│   └── README.md                        # Frontend documentation
+│
+├── .git/                                # Git repository (not in git)
+├── .gitignore                           # Root git ignore
+├── .vscode/                             # VS Code settings
+│   └── settings.json                    # Editor configuration
+│
+├── render.yaml                          # Render deployment config
+├── switch-to-local.ps1                  # Switch to local backend
+├── switch-to-production.ps1             # Switch to production backend
+├── LOCAL_DEVELOPMENT_FIX.md             # Local dev guide
+├── ML_MODEL_EXPLANATION.md              # Complete ML documentation
+├── README.md                            # This file
+└── SETUP_GUIDE.md                       # Setup instructions
+```
+
+### Key Directories Explained
+
+#### Backend (`FullStackBackend/`)
+- **`app/`**: Core application code organized by layers (models, routers, services, schemas)
+- **`ml/`**: Complete ML pipeline with data, models, and visualizations
+- **`scripts/`**: Utility scripts for database seeding, testing, debugging
+- **`alembic/`**: Database migration management
+
+#### Frontend (`FullStackMobile/`)
+- **`src/screens/`**: All screen components (admin and user views)
+- **`src/components/`**: Reusable UI components
+- **`src/services/`**: API integration layer
+- **`src/types/`**: TypeScript type definitions
+- **`.expo/`**: Expo build artifacts and cache
+
+#### ML System (`FullStackBackend/ml/`)
+- **`data/`**: Training datasets (157,680 records)
+- **`models/`**: Trained models (99.98% accuracy)
+- **`plots/`**: Visualizations and analysis charts
+
 ## 📋 Prerequisites
 
 - Node.js (v18 or higher)
@@ -115,13 +337,21 @@ npx expo start --ios      # iOS
 
 ## 🔐 Default Credentials
 
-### Admin Account
-- Email: `admin@nashikaqi.in`
-- Password: `Admin@123`
+**⚠️ IMPORTANT: Passwords are case-sensitive and all lowercase!**
 
-### User Account
+For complete credential information, see **[CREDENTIALS.md](CREDENTIALS.md)**
+
+### Quick Reference
+
+**Admin Account**
+- Email: `admin@nashikaqi.in`
+- Password: `admin@123` *(all lowercase!)*
+
+**User Account**
 - Email: `ankit@nashikaqi.in`
-- Password: `User@1234`
+- Password: `user@1234` *(all lowercase!)*
+
+**Common Mistake**: Using `Admin@123` or `User@1234` (capital letters) - these will NOT work!
 
 ## 📱 Platform Support
 
@@ -251,7 +481,7 @@ curl -X POST "http://localhost:8000/ml/predict" \
 curl "http://localhost:8000/ml/forecast/Satpur?hours=24"
 ```
 
-For complete ML documentation, see [ML_SYSTEM_GUIDE.md](ML_SYSTEM_GUIDE.md)
+For complete ML documentation, see [ML_MODEL_EXPLANATION.md](ML_MODEL_EXPLANATION.md)
 
 ## 🐛 Troubleshooting
 
@@ -314,6 +544,20 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - [Code Snippets](CODE_SNIPPETS.md) - Quick code reference
 - [Web Bundle Fix](WEB_BUNDLE_FIX_COMPLETE.md) - Web compilation fixes
 - [Blank Screen Fix](BLANK_SCREEN_FIX.md) - Blank screen solutions
+
+## 📚 Documentation
+
+- **[Complete Documentation Index](DOCUMENTATION_INDEX.md)** - Guide to all documentation
+- **[Technical Architecture](TECHNICAL_ARCHITECTURE.md)** - Tech stack, API calls, JWT, Bcrypt, error codes
+- **[ML Model Explanation](ML_MODEL_EXPLANATION.md)** - Complete ML system guide from scratch
+- **[Setup Guide](SETUP_GUIDE.md)** - Detailed setup instructions
+- **[Credentials](CREDENTIALS.md)** - Login credentials and troubleshooting
+- **[Fixes Summary](FIXES_SUMMARY.md)** - All implemented fixes
+- **[Troubleshooting Guide](TROUBLESHOOTING_GUIDE.md)** - Common issues and solutions
+- **[Code Snippets](CODE_SNIPPETS.md)** - Quick code reference
+- **[Web Bundle Fix](WEB_BUNDLE_FIX_COMPLETE.md)** - Web compilation fixes
+- **[Blank Screen Fix](BLANK_SCREEN_FIX.md)** - Blank screen solutions
+- **[Local Development Fix](LOCAL_DEVELOPMENT_FIX.md)** - Local dev guide
 
 ## 🎯 Key Features Implemented
 

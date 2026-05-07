@@ -98,18 +98,35 @@ export default function AdminMapPage() {
         </View>
       </View>
 
-      {/* Google Map or Web Placeholder */}
+      {/* Google Map or Web View */}
       {Platform.OS === 'web' ? (
-        <View style={[styles.map, { backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' }]}>
-          <Ionicons name="map-outline" size={64} color="#9ca3af" />
-          <Text style={{ fontSize: 18, fontWeight: '700', color: '#1f2937', marginTop: 16 }}>
-            Map View
-          </Text>
-          <Text style={{ fontSize: 14, color: '#6b7280', textAlign: 'center', marginTop: 8, paddingHorizontal: 40 }}>
-            Interactive maps are available on mobile devices.{'\n'}
-            Use the Android or iOS app to view the map.
-          </Text>
-        </View>
+        <ScrollView style={styles.map}>
+          <View style={{ padding: 20 }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 16 }}>
+              AQI Zones - Nashik City
+            </Text>
+            {zones.map((zone, index) => {
+              const { properties } = zone;
+              const colors = getAQIColor(properties.aqi_value);
+              
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.zoneCard, { borderLeftColor: colors.border, borderLeftWidth: 4 }]}
+                  onPress={() => setSelectedZone(properties.zone_name)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.zoneName}>{properties.zone_name}</Text>
+                    <Text style={styles.zoneLevel}>{properties.level}</Text>
+                  </View>
+                  <View style={[styles.aqiBadge, { backgroundColor: colors.fill }]}>
+                    <Text style={styles.aqiBadgeText}>{Math.round(properties.aqi_value)}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
       ) : (
         <MapView
           ref={mapRef}
@@ -303,4 +320,30 @@ const styles = StyleSheet.create({
   loadingText: { fontSize: 14, color: '#9ca3af', marginTop: 8 },
   errorTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginTop: 8 },
   errorSub: { fontSize: 12, color: '#6b7280', textAlign: 'center' },
+  zoneCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  aqiBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    minWidth: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aqiBadgeText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });

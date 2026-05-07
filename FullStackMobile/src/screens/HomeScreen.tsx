@@ -205,6 +205,7 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
               </View>
               <MapView
                 ref={mapRef}
+                innerRef={mapRef}
                 provider={PROVIDER_GOOGLE}
                 style={styles.map}
                 initialRegion={{
@@ -364,7 +365,35 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
       </Modal>
 
       {/* Date Picker */}
-      {showDatePicker && (
+      {showDatePicker && Platform.OS === 'web' && (
+        <Modal visible={showDatePicker} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: 'auto', paddingBottom: 20 }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Date</Text>
+                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                  <Ionicons name="close" size={24} color="#374151" />
+                </TouchableOpacity>
+              </View>
+              <View style={{ padding: 20 }}>
+                <DateTimePicker
+                  value={selectedDate || new Date()}
+                  mode="date"
+                  maximumDate={new Date()}
+                  onChange={(event, date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      setShowDatePicker(false);
+                    }
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+      
+      {showDatePicker && Platform.OS !== 'web' && (
         <DateTimePicker
           value={selectedDate || new Date()}
           mode="date"
@@ -379,7 +408,35 @@ export default function HomeScreen({ onViewGraph, onViewTable, onLogout }: HomeS
       )}
 
       {/* Time Picker */}
-      {showTimePicker && (
+      {showTimePicker && Platform.OS === 'web' && (
+        <Modal visible={showTimePicker} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: 'auto', paddingBottom: 20 }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select Time</Text>
+                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                  <Ionicons name="close" size={24} color="#374151" />
+                </TouchableOpacity>
+              </View>
+              <View style={{ padding: 20 }}>
+                <DateTimePicker
+                  value={selectedTime || new Date()}
+                  mode="time"
+                  is24Hour
+                  onChange={(event, time) => {
+                    if (time) {
+                      setSelectedTime(time);
+                      setShowTimePicker(false);
+                    }
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+      
+      {showTimePicker && Platform.OS !== 'web' && (
         <DateTimePicker
           value={selectedTime || new Date()}
           mode="time"
