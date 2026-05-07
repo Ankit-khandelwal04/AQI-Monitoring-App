@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiGenerateReport } from '../../utils/api';
+import { BASE_URL, getToken } from '../../utils/api';
 
 interface AdminReportDownloadProps {
   selectedCity: string;
@@ -51,23 +51,69 @@ export default function AdminReportDownload({ selectedCity }: AdminReportDownloa
     setIsGenerating(true);
     
     try {
-      // Call actual API to generate report
-      const reportData = await apiGenerateReport(selectedCity, selectedReport as 'daily' | 'weekly' | 'monthly');
+      const token = await getToken();
       
-      Alert.alert(
-        'Report Ready',
-        `${selectedReport.charAt(0).toUpperCase() + selectedReport.slice(1)} report for ${selectedCity} has been generated successfully.\n\nZones analyzed: ${reportData.zones?.length || 0}`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Report type should remain selected after download
-              console.log(`Downloaded ${selectedReport} report for ${selectedCity}`, reportData);
-            }
+      if (!token) {
+        Alert.alert('Error', 'Please login again');
+        setIsGenerating(false);
+        return;
+      }
+
+      // Build URL with format=excel parameter
+      const url = `${BASE_URL}/reports/generate?city=${encodeURIComponent(selectedCity)}&report_type=${selectedReport}&format=excel`;
+      
+      if (Platform.OS === 'web') {
+        // Web: Download using fetch and blob
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Failed to generate report');
+        }
+
+        // Get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `AQI_Report_${selectedCity}_${selectedReport}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
           }
-        ]
-      );
+        }
+
+        // Convert response to blob
+        const blob = await response.blob();
+        
+        // Create download link
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        Alert.alert(
+          'Success',
+          `${selectedReport.charAt(0).toUpperCase() + selectedReport.slice(1)} report downloaded successfully!`
+        );
+      } else {
+        // Mobile: Show alert (file download on mobile requires additional setup)
+        Alert.alert(
+          'Report Generated',
+          `${selectedReport.charAt(0).toUpperCase() + selectedReport.slice(1)} report for ${selectedCity} has been generated.\n\nNote: Excel download is currently supported on web only. Mobile download coming soon!`,
+          [{ text: 'OK' }]
+        );
+      }
     } catch (error: any) {
+      console.error('Report download error:', error);
       Alert.alert('Error', error.message || 'Failed to generate report');
     } finally {
       setIsGenerating(false);
@@ -110,7 +156,7 @@ export default function AdminReportDownload({ selectedCity }: AdminReportDownloa
         ) : (
           <>
             <Ionicons name="cloud-download-outline" size={14} color="#fff" />
-            <Text style={styles.downloadBtnText}>Generate PDF</Text>
+            <Text style={styles.downloadBtnText}>Download Excel</Text>
           </>
         )}
       </TouchableOpacity>
